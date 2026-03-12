@@ -45,7 +45,7 @@ public class PaymentService {
         RazorpayClient razorpayClient = new RazorpayClient(razorpayKeyId, razorpayKeySecret);
 
         //step 2 : prepare the json object to pass the rezorpay
-        int amount = 500;      //AMOUNT IN PAISE
+        int amount = 9900;      //AMOUNT IN PAISE
         String currency = "INR";
         String receipt = PREMIUM+"_"+ UUID.randomUUID().toString().substring(0, 8);
 

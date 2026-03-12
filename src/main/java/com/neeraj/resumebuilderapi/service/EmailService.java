@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -45,4 +46,22 @@ public class EmailService {
         helper.addAttachment(filename, new ByteArrayResource(attachment));
         mailSender.send(message);
      }
+
+    public void sendSimpleEmail(String to, String subject, String text) throws MessagingException {
+         try{
+             SimpleMailMessage message = new SimpleMailMessage();
+             message.setTo(to);
+             message.setFrom(fromEmail);
+             message.setSubject(subject);
+             message.setText(text);
+
+             mailSender.send(message);
+             log.info("Contact us mail send successfully to : "+ to);
+         }catch (Exception e){
+             log.info("Contact us mail send failed to : "+ to);
+             System.out.println(e.getMessage());
+
+         }
+
+    }
 }
