@@ -12,3 +12,4 @@ razorpay.key.id=${RAZORPAY_KEY_ID}
 razorpay.key.secret=${RAZORPAY_KEY_SECRET}
 spring.mail.host=${SPRING_MAIL_HOST}
 spring.mail.port=${SPRING_MAIL_PORT}
+spring.mail.properties.mail.smtp.from=${spring.mail.properties.mail.smtp.from}
