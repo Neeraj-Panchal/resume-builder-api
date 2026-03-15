@@ -53,4 +53,24 @@ public class EmailService {
          }
 
     }
+
+    public void sendHtmlEmail(String to, String subject, String htmlContent) throws MessagingException {
+        try {
+            log.info("Inside EmailService sendHtmlEmail: to={}, subject={}", to, subject);
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true); // true means HTML content is enabled
+
+            mailSender.send(message);
+            log.info("HTML Email sent successfully!");
+        } catch (Exception e) {
+            log.error("💥 SMTP ERROR: ", e);
+            throw e; // AuthService isko catch kar lega
+        }
+    }
 }
+
