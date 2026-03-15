@@ -23,21 +23,7 @@ public class EmailService {
 
      //MIME = MULTUPURPOSE INTERNET MAIL EXTENSION (used as an envelope to get the message inside it,rather then sending only text ,we will send the html,images and attachements by using the mimeMessage)
     //it is a object which holds the email data (to,from, subject,body)
-     public void sendHtmlEmail(String to, String subject, String htmlContent) throws MessagingException {
-         try {
-             log.info("Inside EmailService sendHtmlEmail: {}, {}, {}", to, subject, htmlContent);
-             MimeMessage message = mailSender.createMimeMessage();
-             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-             helper.setFrom(fromEmail);
-             helper.setTo(to);
-             helper.setSubject(subject);
-             helper.setText(htmlContent, true);
-             mailSender.send(message);
-         } catch (Exception e) {
-             log.error("💥 SMTP ERROR: ", e); // Ye line zaroori hai actual error janne ke liye
-             throw e;
-         }
-     }
+
 
      public void sendEmailWithAttachment(String to, String subject, String body,byte[] attachment, String filename) throws MessagingException {
         MimeMessage message = mailSender.createMimeMessage();

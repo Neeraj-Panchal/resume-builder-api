@@ -49,14 +49,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String , Object>> handleGenericException(Exception ex){
-        log.info("Inside GlobalExceptionHandler handleGenericException()");
+        // YAHAN PAR ASLI ERROR PRINT HOGA RED COLOR MEIN
+        log.error("💥 ASLI ERROR YAHAN HAI: ", ex);
 
+        log.info("Inside GlobalExceptionHandler handleGenericException()");
         Map<String, Object> response = new HashMap<>();
         response.put("message","Something went wrong. Contact Administrator");
         response.put("errors", ex.getMessage());
-
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
