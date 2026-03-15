@@ -72,7 +72,7 @@ public class AuthService {
             emailService.sendHtmlEmail(newUser.getEmail(), "Verify your email",html);
 
         } catch (Exception e){
-            log.error("Exception occurred at sendVerificationEmail(): {}",e.getMessage());
+            log.error("💥 MAIL SEND FAILED but user is saved: {}",e.getMessage());
             throw new RuntimeException("Failed to send verification email: " + e.getMessage());
         }
     }
