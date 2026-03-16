@@ -1,76 +1,108 @@
 package com.neeraj.resumebuilderapi.service;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class EmailService {
 
+    // Render mein SPRING_MAIL_PASSWORD ke andar Brevo ki API Key (xkeysib-...) dalna
+    @Value("${spring.mail.password}")
+    private String apiKey;
+
     @Value("${spring.mail.properties.mail.smtp.from}")
-     private String fromEmail;
+    private String fromEmail;
 
-     private final JavaMailSender mailSender;
+    // ==========================================
+    // 1. Send HTML Email (For Verification)
+    // ==========================================
+    public void sendHtmlEmail(String to, String subject, String htmlContent) {
+        log.info("Inside EmailService sendHtmlEmail (HTTP API): to={}, subject={}", to, subject);
 
-     //MIME = MULTUPURPOSE INTERNET MAIL EXTENSION (used as an envelope to get the message inside it,rather then sending only text ,we will send the html,images and attachements by using the mimeMessage)
-    //it is a object which holds the email data (to,from, subject,body)
+        RestTemplate restTemplate = new RestTemplate();
+        String url = "https://api.brevo.com/v3/smtp/email";
 
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("api-key", apiKey);
 
-     public void sendEmailWithAttachment(String to, String subject, String body,byte[] attachment, String filename) throws MessagingException {
-        MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true);
-        helper.setFrom(fromEmail);
-        helper.setTo(to);
-        helper.setSubject(subject);
-        helper.setText(body);
-        helper.addAttachment(filename, new ByteArrayResource(attachment));
-        mailSender.send(message);
-     }
+        Map<String, Object> body = new HashMap<>();
+        body.put("sender", Map.of("email", fromEmail, "name", "CVPie"));
+        body.put("to", List.of(Map.of("email", to)));
+        body.put("subject", subject);
+        body.put("htmlContent", htmlContent);
 
-    public void sendSimpleEmail(String to, String subject, String text) throws MessagingException {
-         try{
-             SimpleMailMessage message = new SimpleMailMessage();
-             message.setTo(to);
-             message.setFrom(fromEmail);
-             message.setSubject(subject);
-             message.setText(text);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
-             mailSender.send(message);
-             log.info("Contact us mail send successfully to : "+ to);
-         }catch (Exception e){
-             log.info("Contact us mail send failed to : "+ to);
-             System.out.println(e.getMessage());
-
-         }
-
+        try {
+            restTemplate.postForEntity(url, entity, String.class);
+            log.info("✅ HTML Email sent successfully via Brevo API!");
+        } catch (Exception e) {
+            log.error("💥 Brevo API ERROR: ", e);
+            // AuthService ko batane ke liye exception throw karna zaroori hai
+            throw new RuntimeException("Email API failed: " + e.getMessage());
+        }
     }
 
-    public void sendHtmlEmail(String to, String subject, String htmlContent) throws MessagingException {
+    // ==========================================
+    // 2. Send Simple Text Email (For Contact Us)
+    // ==========================================
+    public void sendSimpleEmail(String to, String subject, String text) {
         try {
-            log.info("Inside EmailService sendHtmlEmail: to={}, subject={}", to, subject);
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setFrom(fromEmail);
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(htmlContent, true); // true means HTML content is enabled
-
-            mailSender.send(message);
-            log.info("HTML Email sent successfully!");
+            // Text ko HTML paragraph mein wrap karke bhej diya
+            sendHtmlEmail(to, subject, "<p>" + text + "</p>");
+            log.info("Contact us mail sent successfully to : " + to);
         } catch (Exception e) {
-            log.error("💥 SMTP ERROR: ", e);
-            throw e; // AuthService isko catch kar lega
+            log.error("Contact us mail sending failed to : " + to);
+            System.out.println(e.getMessage());
+        }
+    }
+
+    // ==========================================
+    // 3. Send Email With Attachment (For Sending Resumes)
+    // ==========================================
+    public void sendEmailWithAttachment(String to, String subject, String bodyContent, byte[] attachment, String filename) {
+        log.info("Inside EmailService sendEmailWithAttachment (HTTP API): to={}, subject={}", to, subject);
+
+        RestTemplate restTemplate = new RestTemplate();
+        String url = "https://api.brevo.com/v3/smtp/email";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("api-key", apiKey);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("sender", Map.of("email", fromEmail, "name", "CVPie"));
+        body.put("to", List.of(Map.of("email", to)));
+        body.put("subject", subject);
+        body.put("htmlContent", "<p>" + bodyContent + "</p>");
+
+        // API ke liye PDF attachment ko Base64 String mein convert karna padta hai
+        String base64Content = Base64.getEncoder().encodeToString(attachment);
+        body.put("attachment", List.of(Map.of(
+                "content", base64Content,
+                "name", filename
+        )));
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+
+        try {
+            restTemplate.postForEntity(url, entity, String.class);
+            log.info("✅ Email with attachment sent successfully via Brevo API!");
+        } catch (Exception e) {
+            log.error("💥 Brevo API Attachment ERROR: ", e);
+            throw new RuntimeException("Email API failed: " + e.getMessage());
         }
     }
 }
-
