@@ -105,4 +105,20 @@ public class EmailService {
             throw new RuntimeException("Email API failed: " + e.getMessage());
         }
     }
+
+    // ==========================================
+    // 4. Send Password Reset OTP
+    // ==========================================
+    public void sendPasswordResetEmail(String to, String otp) {
+        log.info("Inside EmailService sendPasswordResetEmail: to={}", to);
+        String subject = "CVPie - Password Reset OTP";
+        String htmlContent = "<div style='font-family:sans-serif'>" +
+                "<h2>Password Reset Request</h2>" +
+                "<p>Your OTP to reset your password is: <strong style='font-size: 24px; color: #5b45ff;'>" + otp + "</strong></p>" +
+                "<p>This OTP is valid for 10 minutes only. Please do not share it with anyone.</p>" +
+                "</div>";
+
+        // Tumhara existing function call kar rahe hain
+        sendHtmlEmail(to, subject, htmlContent);
+    }
 }

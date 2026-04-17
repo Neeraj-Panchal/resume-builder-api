@@ -95,5 +95,38 @@ public class AuthController {
         return ResponseEntity.ok(currentProfile);
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+
+        if (email == null || email.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Email is required"));
+        }
+
+        try {
+            authService.forgotPassword(email);
+            return ResponseEntity.ok(Map.of("success", true, "message", "OTP sent to your email successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        String otp = body.get("otp");
+        String newPassword = body.get("newPassword");
+
+        if (email == null || otp == null || newPassword == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Email, OTP and new password are required"));
+        }
+
+        try {
+            authService.resetPassword(email, otp, newPassword);
+            return ResponseEntity.ok(Map.of("success", true, "message", "Password reset successfully. You can now login."));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
 
 }

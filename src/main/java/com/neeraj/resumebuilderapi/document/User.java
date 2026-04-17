@@ -33,5 +33,6 @@ public class User {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-
+    private String resetOtp;
+    private LocalDateTime otpExpiryTime;
 }

@@ -168,4 +168,47 @@ public class AuthService {
         User existingUser = (User)principalObject;
         return toResponse(existingUser);
     }
+
+    // Generate OTP and Send Mail
+    public void forgotPassword(String email) {
+        log.info("Inside AuthService : forgotPassword(): {}", email);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with this email"));
+
+        // Generate a 6-digit random OTP
+        String otp = String.format("%06d", new java.util.Random().nextInt(999999));
+
+        // Save OTP and set Expiry to 10 minutes from now
+        user.setResetOtp(otp);
+        user.setOtpExpiryTime(LocalDateTime.now().plusMinutes(10));
+        userRepository.save(user);
+
+        // Send Email
+        emailService.sendPasswordResetEmail(user.getEmail(), otp);
+    }
+
+    // Verify OTP and Update Password
+    public void resetPassword(String email, String otp, String newPassword) {
+        log.info("Inside AuthService : resetPassword()");
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with this email"));
+
+        // Check if OTP matches
+        if (user.getResetOtp() == null || !user.getResetOtp().equals(otp)) {
+            throw new RuntimeException("Invalid OTP");
+        }
+
+        // Check if OTP is expired
+        if (user.getOtpExpiryTime().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("OTP has expired. Please request a new one.");
+        }
+
+        // Update with new encoded password
+        user.setPassword(passwordEncoder.encode(newPassword));
+
+        // Clear OTP fields for security after successful reset
+        user.setResetOtp(null);
+        user.setOtpExpiryTime(null);
+        userRepository.save(user);
+    }
 }
